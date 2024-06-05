@@ -6,6 +6,7 @@ const nodemailer = require("nodemailer");
 // ============================================= sign ===================================
 const sign = async(req,res)=>{
     const {username, email, password,usertype} = req.body
+    console.log(username, email, password,usertype)
     try {
         const found = await User.findOne({$or:[{username},{email}]})
         if (found){
@@ -18,6 +19,7 @@ const sign = async(req,res)=>{
             password : passhash,
             usertype
         })
+        console.log(userad)
         const refreshtoken = jwt.sign({
                 id : userad._id
         },process.env.REFRESH,{expiresIn: "7d"})
@@ -85,7 +87,7 @@ const forget_password = async(req,res)=>{
         }
         const secret = process.env.REFRESH + found.password
         const token = jwt.sign({email : found.email , id : found._id},secret , {expiresIn : '10m'})
-        const link = `http://localhost:5000/reset-password/${found._id}/${token}`
+        const link = `http://localhost:5000/auth/reset-password/${found._id}/${token}`
         // envoie d'un email
         const nodemailer = require('nodemailer');
     
@@ -125,7 +127,6 @@ const forget_password = async(req,res)=>{
 // ==========================================reset ==================================
 const reset = async(req,res)=>{
     const {id,token} = req.params;
-    console.log(req.params);
     const found = await User.findOne({_id : id});
     if(!found){
         return res.status(404).json({message : "user not Found"})

@@ -4,60 +4,46 @@ const User = require("../model/User");
 const Comment = require("../model/Comment");
 const usermidd= require("../middlewere/userMidd");
 const Post = require("../model/Post");
+const Notification = require("../model/notification")
+const {creatcomment,updatecomment,deletecomment}= require("../controllers/commentcontrollers");
+
+
 
 //crée un commentaire : 
-router.post("/create/:postId",usermidd, async(req,res)=>{
-    const {postId } = req.params ;
-    const {_id} = req.user._doc
-    const {text} = req.body;
-    try {
-        const post = await Post.findById(postId);
-        if(!post){
-            res.status(404).json("Post Not Found");
-        }
-        const comment = new Comment({
-            user : _id,
-            post : postId,
-            text
-        })
-        post.comments.push(comment._id)
-        await post.save();
-        await comment.save();
-        res.status(200).json("commentaire ajouter")
-    } catch (error) {
-        res.status(500).json(error)
-    }
-})
+router.post("/create/:postId", usermidd, creatcomment);
+
 // update comment 
 
-router.put("/update/:commentId",async(req,res)=>{
-    const {commentId} = req.params;
-    const {text}= req.body
-    try {
-        const comment = await Comment.findByIdAndUpdate(commentId,{text},{new: true});
-        if(!comment){
-            res.status(404).json("comment Not Found");
-        }
-        res.status(200).json("Update success")
-    } catch (error) {
-        res.status(500).json(error)
-    }
-})
+router.put("/update/:commentId",updatecomment)
 
 //delete a Commentaire : 
-router.delete("/delete/:commentId",async(req,res)=>{
-    const {commentId} = req.params;
+router.delete("/delete/:commentId",deletecomment,deletecomment)
+
+// get commentaire :
+
+router.get("/getcomment/:postId",async (req,res)=>{
+    const {postId}= req.params;
     try {
-        const comment = await Comment.findByIdAndDelete(commentId)
-        if(!comment){
-            res.status(404).json("Comment Not Found")
+        const findpost = await Post.findById(postId);
+        if (!findpost){
+            return res.status(404).json("post not found");
         }
-        const post = await Post.findById(comment.post);
-        post.comments = post.comments.filter((i)=>i.toString()!== commentId.toString())
-        await post.save()
-        res.status(200).json("Comment deleted seccessefuly");
+        const commentaire = findpost.comments;
+        console.log(commentaire)
+        let total = {commentaires: [{}]}
+        console.log(total)
+        for (let i = 0 ; i<commentaire.length;i++){
+            const commentss = await Comment.findById(commentaire[i])
+            if (!commentss){
+                continue;
+            }
+            const userf = await User.findById(commentss.user);
+            console.log("je suis user"+userf)
+            total.commentaires.push({user : userf.username ,text :commentss.text })
+        }
+        res.status(201).json(total);
     } catch (error) {
-        
+        res.status(500).json({message : "erreur dans la recuperation des commentaires"})
     }
 })
 

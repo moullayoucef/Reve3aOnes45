@@ -32,6 +32,14 @@ const userschema =  new mongoose.Schema({
         type : String,
         require : false,
         default : ""
-    }
+    },
+    tasks : [{
+        type:mongoose.Schema.Types.ObjectId,
+        ref : "Tasks"
+    }],
+    notification: [{
+        type:mongoose.Schema.Types.ObjectId,
+        ref : "notification"
+    }]
 },{timestamps : true})
 module.exports = mongoose.model('User',userschema)
